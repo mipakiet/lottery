@@ -8,7 +8,7 @@ class Participant:
     def __init__(self, first_name: str, second_name: str, weight=1):
         self.first_name = first_name
         self.second_name = second_name
-        self.weight = weight
+        self.weight = int(weight)
 
     def print_info(self):
         print(f"Name - {self.first_name} Second - {self.second_name} Weight - {self.weight}")
@@ -21,6 +21,8 @@ class Prize:
 class Lottery:
     def __init__(self):
         self.participant = []
+        self.winner_count = None
+        self.winners = None
 
     def load_participants(self):
 
@@ -39,12 +41,12 @@ class Lottery:
             name = input("Name of the file [participants2] - ")
             if name == "":
                 name = 'participants2'
-            extension = input("Extension of the file[only json and csv are acceptable][json] - ")
+            extension = input("Extension of the file (only json and csv are acceptable)[json] - ")
             if extension == "":
                 extension = 'json'
             while extension not in ['csv', 'json']:
                 print("Wrong extension")
-                extension = input("Extension of the file[only json and csv are acceptable][json] - ")
+                extension = input("Extension of the file (only json and csv are acceptable)[json] - ")
                 if extension == "":
                     extension = 'json'
 
@@ -59,13 +61,13 @@ class Lottery:
                     if line_count != 0:
                         if len(row) < 3:
                             print("Error with loading data from file - not enough columns")
-                            return False
+                            exit()
                         if len(row) > 3:
                             try:
                                 weight = int(row[3])
                             except ValueError:
                                 print("Error with loading data from file - weight must be integer")
-                                return False
+                                exit()
                             self.participant.append(Participant(row[1], row[2], weight))
                         else:
                             self.participant.append(Participant(row[1], row[2]))
@@ -75,19 +77,45 @@ class Lottery:
             with open(file, 'r') as f:
                 data = json.load(f)
                 for item in data:
-                    if 'first_name' not in item and 'second_name' not in item:
-                        print("Error with loading data from file - wrong variables names")
-                        return False
+                    if 'first_name' not in item or 'last_name' not in item:
+                        print("Error with loading data from file - there are no needed variables")
+                        exit()
                     if 'weight' in item:
                         self.participant.append(Participant(item['first_name'], item['last_name'], item['weight']))
                     else:
                         self.participant.append(Participant(item['first_name'], item['last_name']))
 
-    def run(self):
-        print('-' * 60)
-        print("HI! Welcome to the lottery!")
-        print('-' * 60)
-        if not self.load_participants():
-            return False
-            return False
+    def get_winners_count(self):
+        participants_count = len(self.participant)
+        winner_count = input("How many winners you want to draw? - ")
+        while not winner_count.isnumeric() or int(winner_count) > participants_count or int(winner_count) <= 0:
+            print(f"Please enter the number lower than {participants_count + 1} and higher than 0")
+            winner_count = input("How many winners you want to draw? - ")
+        self.winner_count = int(winner_count)
 
+    def draw_winners(self):
+        # winners can be duplicated
+        self.winners = random.choices(self.participant, weights=[x.weight for x in self.participant],
+                                      k=self.winner_count)
+
+    def print_winners(self):
+        print("The winners:")
+        for winner in self.winners:
+            print(f"{winner.first_name} {winner.second_name}")
+
+    def run(self):
+        def dashed_line():
+            print('-' * 60)
+
+        dashed_line()
+        print("HI! Welcome to the lottery!")
+        dashed_line()
+        self.load_participants()
+        dashed_line()
+        self.get_winners_count()
+        dashed_line()
+        self.draw_winners()
+        self.print_winners()
+        dashed_line()
+        print("Thx for using app!")
+        dashed_line()
