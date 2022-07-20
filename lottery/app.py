@@ -11,7 +11,8 @@ class Participant:
         self.weight = int(weight)
 
     def print_info(self):
-        print(f"Name - {self.first_name} Second - {self.second_name} Weight - {self.weight}")
+        print(
+            f"Name - {self.first_name} Second - {self.second_name} Weight - {self.weight}")
 
 
 class Prize:
@@ -41,12 +42,14 @@ class Lottery:
             name = input("Name of the file [participants2] - ")
             if name == "":
                 name = 'participants2'
-            extension = input("Extension of the file (only json and csv are acceptable)[json] - ")
+            extension = input(
+                "Extension of the file (only json and csv are acceptable)[json] - ")
             if extension == "":
                 extension = 'json'
             while extension not in ['csv', 'json']:
                 print("Wrong extension")
-                extension = input("Extension of the file (only json and csv are acceptable)[json] - ")
+                extension = input(
+                    "Extension of the file (only json and csv are acceptable)[json] - ")
                 if extension == "":
                     extension = 'json'
 
@@ -60,36 +63,45 @@ class Lottery:
                 for row in csv_reader:
                     if line_count != 0:
                         if len(row) < 3:
-                            print("Error with loading data from file - not enough columns")
+                            print(
+                                "Error with loading data from file - not enough columns")
                             exit()
                         if len(row) > 3:
                             try:
                                 weight = int(row[3])
                             except ValueError:
-                                print("Error with loading data from file - weight must be integer")
+                                print(
+                                    "Error with loading data from file - weight must be integer")
                                 exit()
-                            self.participant.append(Participant(row[1], row[2], weight))
+                            self.participant.append(
+                                Participant(row[1], row[2], weight))
                         else:
-                            self.participant.append(Participant(row[1], row[2]))
+                            self.participant.append(
+                                Participant(row[1], row[2]))
 
                     line_count += 1
         elif file.suffix == ".json":
+            # nice to add checking json with jsonschema
             with open(file, 'r') as f:
                 data = json.load(f)
                 for item in data:
                     if 'first_name' not in item or 'last_name' not in item:
-                        print("Error with loading data from file - there are no needed variables")
+                        print(
+                            "Error with loading data from file - there are no needed variables")
                         exit()
                     if 'weight' in item:
-                        self.participant.append(Participant(item['first_name'], item['last_name'], item['weight']))
+                        self.participant.append(Participant(
+                            item['first_name'], item['last_name'], item['weight']))
                     else:
-                        self.participant.append(Participant(item['first_name'], item['last_name']))
+                        self.participant.append(Participant(
+                            item['first_name'], item['last_name']))
 
     def get_winners_count(self):
         participants_count = len(self.participant)
         winner_count = input("How many winners you want to draw? - ")
         while not winner_count.isnumeric() or int(winner_count) > participants_count or int(winner_count) <= 0:
-            print(f"Please enter the number lower than {participants_count + 1} and higher than 0")
+            print(
+                f"Please enter the number lower than {participants_count + 1} and higher than 0")
             winner_count = input("How many winners you want to draw? - ")
         self.winner_count = int(winner_count)
 
