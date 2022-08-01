@@ -1,5 +1,6 @@
 import random
-from input_handling.get import *
+from input_handling.get import load_participants, get_winners_count
+from .extensions import LotteryError
 
 
 def dashed_line():
@@ -13,10 +14,10 @@ class Lottery:
         self.winners = []
 
     def draw_winners(self) -> None:
-        participant = self.participant.copy()
+        participants_dict = {item: item.weight for item in self.participant}
         for i in range(self.winner_count):
-            winner = random.choices(participant, weights=[x.weight for x in participant])[0]
-            participant.remove(winner)
+            winner = random.choices(tuple(participants_dict), tuple(participants_dict.values()))[0]
+            participants_dict.pop(winner)
             self.winners.append(winner)
 
     def print_winners(self) -> None:
@@ -32,10 +33,7 @@ class Lottery:
 
         try:
             self.participant = load_participants()
-        except DataError as e:
-            print(e)
-            return
-        except FileNotFoundError as e:
+        except LotteryError as e:
             print(e)
             return
 
@@ -43,7 +41,7 @@ class Lottery:
 
         try:
             self.winner_count = get_winners_count(len(self.participant))
-        except ValueError as e:
+        except LotteryError as e:
             print(e)
             return
 

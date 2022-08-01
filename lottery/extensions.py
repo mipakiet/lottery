@@ -1,0 +1,2 @@
+class LotteryError(Exception):
+    pass
