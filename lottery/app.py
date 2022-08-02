@@ -14,11 +14,12 @@ class Lottery:
         self.winners = []
 
     def draw_winners(self) -> None:
-        participants_dict = {item: item.weight for item in self.participant}
+        self.winners = []
+        participants_dict = {index: self.participant[index].weight for index in range(len(self.participant))}
         for i in range(self.winner_count):
             winner = random.choices(tuple(participants_dict), tuple(participants_dict.values()))[0]
             participants_dict.pop(winner)
-            self.winners.append(winner)
+            self.winners.append(self.participant[winner])
 
     def print_winners(self) -> None:
         print("The winners:")
