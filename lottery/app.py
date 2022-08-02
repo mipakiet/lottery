@@ -24,7 +24,7 @@ class Lottery:
     def print_winners(self) -> None:
         print("The winners:")
         for winner in self.winners:
-            print(f"{winner.first_name} {winner.second_name}")
+            print(f"{winner.id} - {winner.first_name} {winner.second_name}")
 
     def run(self) -> None:
 

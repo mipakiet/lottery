@@ -22,12 +22,12 @@ def get_generator(file_path, suffix) -> Generator[Participant, None, None]:
         with open(file_path, mode='r') as file:
             try:
                 for row in INPUT_FORMATS[suffix](file):
-                    if 'first_name' not in row or 'last_name' not in row:
+                    if 'first_name' not in row or 'last_name' not in row or 'id' not in row:
                         raise LotteryError("Error with loading data for file - wrong file schema")
                     elif 'weight' in row:
-                        yield Participant(row['first_name'], row['last_name'], row['weight'])
+                        yield Participant(row['id'], row['first_name'], row['last_name'], row['weight'])
                     else:
-                        yield Participant(row['first_name'], row['last_name'])
+                        yield Participant(row['id'], row['first_name'], row['last_name'])
             except ValueError:
                 raise LotteryError("Error with loading data for file - cant read data")
     except OSError as e:
