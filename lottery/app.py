@@ -1,6 +1,6 @@
 import random
-from input_handling.get import load_participants, get_winners_count
-from .extensions import LotteryError
+from .get import load_participants, get_winners_count
+from .exceptions import LotteryError
 
 
 def dashed_line():
@@ -17,7 +17,7 @@ class Lottery:
         self.winners = []
         participants_dict = {index: self.participant[index].weight for index in range(len(self.participant))}
         for i in range(self.winner_count):
-            winner = random.choices(tuple(participants_dict), tuple(participants_dict.values()))[0]
+            winner = random.choices(tuple(participants_dict), participants_dict.values())[0]
             participants_dict.pop(winner)
             self.winners.append(self.participant[winner])
 

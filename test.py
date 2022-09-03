@@ -1,48 +1,22 @@
-import unittest
+import pytest
 
-from input_handling.get import get_generator
+from lottery.get import generate_participants
 from lottery.models import Participant
-from lottery.extensions import LotteryError
+from lottery.exceptions import LotteryError
 
 
-class TestInputHandling(unittest.TestCase):
-    def test_get_generator(self):
-        file_path = 'data/participants1.csv'
-        suffix = 'csv'
-        gen = get_generator(file_path, suffix)
-        for item in gen:
-            self.assertIsInstance(item, Participant)
+@pytest.mark.parametrize("file_path, suffix, expected", [
+    ('data/participants1.csv', 'csv', Participant),
+    ('data/participants1.json', 'json', Participant),
+    ('data/participants.pdf', 'pdf', LotteryError),
+    ('nopath', 'pdf', LotteryError),
+])
+def test_generate_participants_loading_data(file_path, suffix, expected):
+    gen = generate_participants(file_path, suffix)
 
-        file_path = 'data/participants2.csv'
-        suffix = 'csv'
-        gen = get_generator(file_path, suffix)
-        for item in gen:
-            self.assertIsInstance(item, Participant)
-
-        file_path = 'data/participants1.json'
-        suffix = 'json'
-        gen = get_generator(file_path, suffix)
-        for item in gen:
-            self.assertIsInstance(item, Participant)
-
-        file_path = 'data/participants2.json'
-        suffix = 'json'
-        gen = get_generator(file_path, suffix)
-        for item in gen:
-            self.assertIsInstance(item, Participant)
-
-        file_path = 'data/participants2.pdf'
-        suffix = 'pdf'
-        gen = get_generator(file_path, suffix)
-        with self.assertRaises(LotteryError):
+    if issubclass(expected, Exception):
+        with pytest.raises(LotteryError):
             next(gen)
-
-        file_path = 'data/nopath'
-        suffix = 'json'
-        gen = get_generator(file_path, suffix)
-        with self.assertRaises(LotteryError):
-            next(gen)
-
-
-if __name__ == '__main__':
-    unittest.main()
+    else:
+        for item in gen:
+            assert type(item) is expected

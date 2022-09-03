@@ -1,9 +1,10 @@
-import pathlib
-import json
 import csv
+import json
+import pathlib
+from typing import Generator, NamedTuple
+
+from lottery.exceptions import LotteryError
 from lottery.models import Participant
-from typing import Generator
-from lottery.extensions import LotteryError
 
 DEFAULT_DATA_FOLDER = 'data'
 DEFAULT_PARTICIPANTS_FILE_NAME = 'participants2'
@@ -15,7 +16,13 @@ INPUT_FORMATS = {
 }
 
 
-def get_generator(file_path, suffix) -> Generator[Participant, None, None]:
+class PathInput(NamedTuple):
+    path: str
+    name: str
+    extension: str
+
+
+def generate_participants(file_path, suffix) -> Generator[Participant, None, None]:
     if suffix not in INPUT_FORMATS:
         raise LotteryError("Not supported suffix")
     try:
@@ -34,7 +41,7 @@ def get_generator(file_path, suffix) -> Generator[Participant, None, None]:
         raise LotteryError(f"Cant load data error - {e}") from e
 
 
-def get_path_input() -> tuple[str, str, str]:
+def get_path_input() -> PathInput:
     path = input(f"Please enter the path to the data file [{DEFAULT_DATA_FOLDER}] - ")
     if not path:
         path = DEFAULT_DATA_FOLDER
@@ -47,16 +54,17 @@ def get_path_input() -> tuple[str, str, str]:
     if not extension:
         extension = DEFAULT_PARTICIPANTS_FILE_SUFFIX
 
-    return path, name, extension
+    return PathInput(path, name, extension)
 
 
 def load_participants() -> list[Participant]:
 
     path_from_input = get_path_input()
 
-    file_path = pathlib.Path(__file__).parent.parent / path_from_input[0] / (path_from_input[1] + "." + path_from_input[2])
+    file_path = pathlib.Path(__file__).parent.parent / path_from_input.path / (path_from_input.name + "." +
+                                                                                    path_from_input.extension)
 
-    data_gen = get_generator(file_path, path_from_input[2])
+    data_gen = generate_participants(file_path, path_from_input[2])
 
     return list(data_gen)
 
