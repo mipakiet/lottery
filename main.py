@@ -1,5 +1,4 @@
-import lottery.app
+from lottery.app import run
 
 if __name__ == "__main__":
-    app = lottery.app.Lottery()
-    app.run()
+    run()
