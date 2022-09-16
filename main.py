@@ -1,5 +1,6 @@
-import lottery.app
+from lottery.app import run
+import logging
 
 if __name__ == "__main__":
-    app = lottery.app.Lottery()
-    app.run()
+    logging.getLogger().setLevel(logging.INFO)
+    run()

@@ -1,54 +1,74 @@
+import pathlib
+import logging
+import click
 import random
-from .get import load_participants, get_winners_count
+
+from .get import get_first_prize_file, load_prizes, generate_participants
 from .exceptions import LotteryError
+from .save import save_results
+from .models import Participant, Prize
 
 
-def dashed_line():
-    print('-' * 60)
+DEFAULT_DATA_FOLDER = 'data'
+DEFAULT_PARTICIPANTS_FILE_NAME = 'participants1'
+DEFAULT_PARTICIPANTS_FILE_SUFFIX = 'json'
+DEFAULT_PRIZE_FOLDER = 'lottery_templates'
 
 
-class Lottery:
-    def __init__(self):
-        self.participant = []
-        self.winner_count = None
-        self.winners = []
+def draw_winners(participant: list[Participant], winner_count: int) -> list[Participant]:
+    winners = []
+    participants_dict = {index: participant[index].weight for index in range(len(participant))}
+    for i in range(winner_count):
+        winner = random.choices(tuple(participants_dict), participants_dict.values())[0]
+        participants_dict.pop(winner)
+        winners.append(participant[winner])
 
-    def draw_winners(self) -> None:
-        self.winners = []
-        participants_dict = {index: self.participant[index].weight for index in range(len(self.participant))}
-        for i in range(self.winner_count):
-            winner = random.choices(tuple(participants_dict), participants_dict.values())[0]
-            participants_dict.pop(winner)
-            self.winners.append(self.participant[winner])
+    return winners
 
-    def print_winners(self) -> None:
-        print("The winners:")
-        for winner in self.winners:
-            print(f"{winner.id} - {winner.first_name} {winner.second_name}")
 
-    def run(self) -> None:
+def print_results(winners: list[Participant], prizes: list[Prize] = None) -> None:
+    logging.info("The winners:")
+    if prizes is None:
+        for winner, prize in zip(winners, prizes):
+            logging.info(f"{winner.first_name} {winner.second_name}({winner.id}) Prize - {prize.name}")
+    else:
+        for winner in winners:
+            logging.info(f"{winner.first_name} {winner.second_name}({winner.id}) ")
 
-        dashed_line()
-        print("HI! Welcome to the lottery!")
-        dashed_line()
 
+@click.command()
+@click.option('-datafile_path', prompt='Please enter path to the data file', default=DEFAULT_DATA_FOLDER,
+              show_default=True)
+@click.argument('datafile_name', default=DEFAULT_PARTICIPANTS_FILE_NAME)
+@click.option('-datafile_suffix', prompt='Please enter suffix of the data file',
+              default=DEFAULT_PARTICIPANTS_FILE_SUFFIX, show_default=True)
+@click.argument('prize_file', default=get_first_prize_file(DEFAULT_DATA_FOLDER, DEFAULT_PRIZE_FOLDER), type=str)
+@click.option('-result_file', type=str)
+def run(datafile_path, datafile_name, datafile_suffix, prize_file, result_file) -> None:
+
+    try:
+        participant = list(generate_participants(pathlib.Path(datafile_path) / (datafile_name + "." + datafile_suffix)))
+    except LotteryError as e:
+        logging.info(e)
+        return
+
+    try:
+        prize = load_prizes(prize_file)
+    except LotteryError as e:
+        logging.info(e)
+        return
+
+    winner_count = len(prize)
+
+    winners = draw_winners(participant, winner_count)
+
+    if result_file:
         try:
-            self.participant = load_participants()
+            save_results(winners, prize, result_file)
         except LotteryError as e:
-            print(e)
+            logging.info(e)
             return
+    else:
+        print_results(winners, prize)
 
-        dashed_line()
-
-        try:
-            self.winner_count = get_winners_count(len(self.participant))
-        except LotteryError as e:
-            print(e)
-            return
-
-        dashed_line()
-        self.draw_winners()
-        self.print_winners()
-        dashed_line()
-        print("Thx for using app!")
-        dashed_line()
+    logging.info("Thx for using app!")

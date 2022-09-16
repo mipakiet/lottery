@@ -1,4 +1,6 @@
 # Project
+poetry.toml
+commands
 .idea
 # Byte-compiled / optimized / DLL files
 __pycache__/
