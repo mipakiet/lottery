@@ -7,10 +7,6 @@ from typing import Generator
 from lottery.exceptions import LotteryError
 from lottery.models import Participant, Prize
 
-DEFAULT_DATA_FOLDER = 'data'
-DEFAULT_PARTICIPANTS_FILE_NAME = 'participants1'
-DEFAULT_PARTICIPANTS_FILE_SUFFIX = 'json'
-DEFAULT_PRIZE_FOLDER = 'lottery_templates'
 
 PARTICIPANTS_INPUT_FORMATS = {
     'csv': lambda file: csv.DictReader(file),
@@ -33,7 +29,7 @@ def generate_participants(file_path: pathlib.Path) -> Generator[Participant, Non
                     if 'id' not in row or 'first_name' not in row or 'last_name' not in row:
                         raise LotteryError("Error with loading data for file - wrong file schema")
                     elif 'weight' in row:
-                        yield Participant(row['id'], row['first_name'], row['last_name'], row['weight'])
+                        yield Participant(row['id'], row['first_name'], row['last_name'], row.get('weight', 1))
                     else:
                         yield Participant(row['id'], row['first_name'], row['last_name'])
             except ValueError:
@@ -60,11 +56,11 @@ def generate_prizes(file_path: pathlib.Path) -> Generator[Prize, None, None]:
         raise LotteryError(f"Cant load data error - {e}") from e
 
 
-def get_first_prize_file() -> str:
-    prizes_path = pathlib.Path(__file__).parent.parent / DEFAULT_DATA_FOLDER / DEFAULT_PRIZE_FOLDER
+def get_first_prize_file(data_folder, prize_folder) -> str:
+    prizes_path = pathlib.Path(__file__).parent.parent / data_folder / prize_folder
     first_file = next(prizes_path.glob('**/*'))
-    first_file_user_friendly_string = str(first_file)[str(first_file).find(DEFAULT_DATA_FOLDER)::]
-    return first_file_user_friendly_string
+    first_file_user_friendly_string = first_file.relative_to(prizes_path.parent.parent)
+    return str(first_file_user_friendly_string)
 
 
 def load_participants(file_path_str: str) -> list[Participant]:
@@ -79,30 +75,3 @@ def load_prizes(file_path_str: str) -> list[Prize]:
     data_gen = generate_prizes(file_path)
 
     return list(data_gen)
-
-#
-# def get_prize_file_path() -> pathlib.Path:
-#     prizes_path = pathlib.Path(__file__).parent.parent / DEFAULT_DATA_FOLDER / DEFAULT_PRIZE_FOLDER
-#     first_file = next(prizes_path.glob('**/*'))
-#     first_file_user_friendly_string = str(first_file)[str(first_file).find(DEFAULT_DATA_FOLDER)::]
-#     if click.confirm(f"Do you want load prizes from \"{first_file_user_friendly_string}\"?"):
-#         return first_file
-#     else:
-#         folder_path = click.prompt("Please enter the path to the prize file", type=str)
-#         name = click.prompt("Name of the file", type=str)
-#         suffix = click.prompt("Extension of the file", type=click.Choice(PRIZE_INPUT_FORMATS.keys()))
-#         path = pathlib.Path(__file__).parent.parent / folder_path / (name + "." + suffix)
-#         return path
-#
-#
-# def get_results_files_path() -> pathlib.Path:
-#     folder_path = click.prompt("Please enter the path to the results file", type=str)
-#     name = click.prompt("Name of the file (will be saved in json format)", type=str)
-#     return pathlib.Path(folder_path) / (name + "." + "json")
-#
-#
-#
-#
-# def get_winners_count(participants_count: int) -> int:
-#     winner_count = click.prompt("How many winners you want to draw?", type=click.IntRange(1, participants_count))
-#     return winner_count
