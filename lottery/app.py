@@ -7,6 +7,7 @@ from .get import get_first_prize_file, load_prizes, generate_participants
 from .exceptions import LotteryError
 from .save import save_results
 from .models import Participant, Prize
+from dataclasses import dataclass
 
 
 DEFAULT_DATA_FOLDER = 'data'
@@ -15,25 +16,24 @@ DEFAULT_PARTICIPANTS_FILE_SUFFIX = 'json'
 DEFAULT_PRIZE_FOLDER = 'lottery_templates'
 
 
-def draw_winners(participant: list[Participant], winner_count: int) -> list[Participant]:
-    winners = []
-    participants_dict = {index: participant[index].weight for index in range(len(participant))}
-    for i in range(winner_count):
-        winner = random.choices(tuple(participants_dict), participants_dict.values())[0]
-        participants_dict.pop(winner)
-        winners.append(participant[winner])
+@dataclass
+class Lottery:
+    participants: list[Participant]
+    prizes: list[Prize]
 
-    return winners
-
-
-def print_results(winners: list[Participant], prizes: list[Prize] = None) -> None:
-    logging.info("The winners:")
-    if prizes is None:
-        for winner, prize in zip(winners, prizes):
+    def print_results(self, winners: list[Participant]) -> None:
+        logging.info("The winners:")
+        for winner, prize in zip(winners, self.prizes):
             logging.info(f"{winner.first_name} {winner.second_name}({winner.id}) Prize - {prize.name}")
-    else:
-        for winner in winners:
-            logging.info(f"{winner.first_name} {winner.second_name}({winner.id}) ")
+
+    def draw_winners(self) -> list[Participant]:
+        participants_dict = {index: self.participants[index].weight for index in range(len(self.participants))}
+        winners = []
+        for i in range(len(self.prizes)):
+            winner = random.choices(tuple(participants_dict), participants_dict.values())[0]
+            participants_dict.pop(winner)
+            winners.append(self.participants[winner])
+        return winners
 
 
 @click.command()
@@ -58,17 +58,17 @@ def run(datafile_path, datafile_name, datafile_suffix, prize_file, result_file) 
         logging.info(e)
         return
 
-    winner_count = len(prize)
-
-    winners = draw_winners(participant, winner_count)
+    lottery = Lottery(participant, prize)
+    winners = lottery.draw_winners()
 
     if result_file:
         try:
-            save_results(winners, prize, result_file)
+            save_results(winners, lottery.prizes, result_file)
         except LotteryError as e:
             logging.info(e)
             return
     else:
-        print_results(winners, prize)
+        lottery.print_results(winners)
 
     logging.info("Thx for using app!")
+
