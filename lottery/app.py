@@ -20,7 +20,7 @@ class Lottery:
     def __init__(self, participants:  list[Participant], prizes: list[Prize]):
         self.__participants = participants
         self.__prizes = prizes
-        self.__winners = None
+        self.__winners: list[Participant] | None = None
 
     def draw_winners(self) -> None:
         participants_dict = {index: self.__participants[index].weight for index in range(len(self.__participants))}
@@ -37,11 +37,11 @@ class Lottery:
         for winner, prize in zip(self.__winners, self.__prizes):
             logging.info(f"{winner.first_name} {winner.second_name}({winner.id}) Prize - {prize.name}")
 
-    def save_results(self, path_file_dtr) -> None:
+    def save_results(self, path_file_dtr: str) -> None:
         if self.__winners is None:
             raise LotteryError("You have to draw winners ")
         path_file = pathlib.Path(path_file_dtr)
-        result = list()
+        result = []
         for winner, prize in zip(self.__winners, self.__prizes):
             result.append(
                 {"first_name": winner.first_name, "last_name": winner.second_name, "participant_id": winner.id,
@@ -79,17 +79,9 @@ def run(datafile_path, datafile_name, datafile_suffix, prize_file, result_file) 
     lottery.draw_winners()
 
     if result_file:
-        try:
-            lottery.save_results(result_file)
-        except LotteryError as e:
-            logging.info(e)
-            return
+        lottery.save_results(result_file)
     else:
-        try:
-            lottery.print_results()
-        except LotteryError as e:
-            logging.info(e)
-            return
+        lottery.print_results()
 
     logging.info("Thx for using app!")
 
