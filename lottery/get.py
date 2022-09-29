@@ -58,7 +58,10 @@ def generate_prizes(file_path: pathlib.Path) -> Generator[Prize, None, None]:
 
 def get_first_prize_file(data_folder, prize_folder) -> str:
     prizes_path = pathlib.Path(__file__).parent.parent / data_folder / prize_folder
-    first_file = next(prizes_path.glob('**/*'))
+    try:
+        first_file = next(prizes_path.glob('**/*'))
+    except StopIteration:
+        raise LotteryError("There is no prize file")
     first_file_user_friendly_string = first_file.relative_to(prizes_path.parent.parent)
     return str(first_file_user_friendly_string)
 
