@@ -2,10 +2,10 @@ import pathlib
 import logging
 import click
 import random
+import json
 
 from .get import get_first_prize_file, load_prizes, generate_participants
 from .exceptions import LotteryError
-from .save import save_results
 from .models import Participant, Prize
 
 
@@ -15,25 +15,42 @@ DEFAULT_PARTICIPANTS_FILE_SUFFIX = 'json'
 DEFAULT_PRIZE_FOLDER = 'lottery_templates'
 
 
-def draw_winners(participant: list[Participant], winner_count: int) -> list[Participant]:
-    winners = []
-    participants_dict = {index: participant[index].weight for index in range(len(participant))}
-    for i in range(winner_count):
-        winner = random.choices(tuple(participants_dict), participants_dict.values())[0]
-        participants_dict.pop(winner)
-        winners.append(participant[winner])
+class Lottery:
 
-    return winners
+    def __init__(self, participants:  list[Participant], prizes: list[Prize]):
+        self.__participants = participants
+        self.__prizes = prizes
+        self.__winners: list[Participant] | None = None
 
+    def draw_winners(self) -> None:
+        participants_dict = {index: self.__participants[index].weight for index in range(len(self.__participants))}
+        self.__winners = []
+        for i in range(len(self.__prizes)):
+            winner = random.choices(tuple(participants_dict), participants_dict.values())[0]
+            participants_dict.pop(winner)
+            self.__winners.append(self.__participants[winner])
 
-def print_results(winners: list[Participant], prizes: list[Prize] = None) -> None:
-    logging.info("The winners:")
-    if prizes is None:
-        for winner, prize in zip(winners, prizes):
+    def print_results(self) -> None:
+        if self.__winners is None:
+            raise LotteryError("You have to draw winners ")
+        logging.info("The winners:")
+        for winner, prize in zip(self.__winners, self.__prizes):
             logging.info(f"{winner.first_name} {winner.second_name}({winner.id}) Prize - {prize.name}")
-    else:
-        for winner in winners:
-            logging.info(f"{winner.first_name} {winner.second_name}({winner.id}) ")
+
+    def save_results(self, path_file_dtr: str) -> None:
+        if self.__winners is None:
+            raise LotteryError("You have to draw winners ")
+        path_file = pathlib.Path(path_file_dtr)
+        result = []
+        for winner, prize in zip(self.__winners, self.__prizes):
+            result.append(
+                {"first_name": winner.first_name, "last_name": winner.second_name, "participant_id": winner.id,
+                 "prize": prize.name})
+        try:
+            with open(path_file, mode='w') as json_file:
+                json.dump(result, json_file)
+        except OSError as e:
+            raise LotteryError(f"Cant save results {e}") from e
 
 
 @click.command()
@@ -58,17 +75,13 @@ def run(datafile_path, datafile_name, datafile_suffix, prize_file, result_file) 
         logging.info(e)
         return
 
-    winner_count = len(prize)
-
-    winners = draw_winners(participant, winner_count)
+    lottery = Lottery(participant, prize)
+    lottery.draw_winners()
 
     if result_file:
-        try:
-            save_results(winners, prize, result_file)
-        except LotteryError as e:
-            logging.info(e)
-            return
+        lottery.save_results(result_file)
     else:
-        print_results(winners, prize)
+        lottery.print_results()
 
     logging.info("Thx for using app!")
+
