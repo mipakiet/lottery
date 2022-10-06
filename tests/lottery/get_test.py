@@ -29,6 +29,7 @@ def test_generate_participants_exception(file_path):
     with pytest.raises(LotteryError):
         next(gen)
 
+
 @pytest.mark.parametrize("file_path", [
     pathlib.Path('data_testing/participants.pdf'),
     pathlib.Path('data_testing/participants-broken.json'),
@@ -66,8 +67,6 @@ def test_generate_prizes_exception(file_path):
         next(gen)
 
 
-
-
 @pytest.mark.parametrize("data_folder, prize_folder, result", [
     ("tests\\data_testing", "lottery_templates", "data_testing\\lottery_templates\\a.json"),
 ])
@@ -84,8 +83,8 @@ def test_get_first_prize_file_exception(data_folder, prize_folder, result):
         get_first_prize_file(data_folder, prize_folder)
 
 
-@patch('lottery.get.generate_prizes')
-@pytest.mark.parametrize("file_path", [
-    "data_testing/prize1.json",
-])
+def test_load_prizes(mock, file_path):
+    mock.return_value = generate_prizes1()
+    result = load_prizes(file_path)
 
+    assert result == prize1_Prize
