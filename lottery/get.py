@@ -1,5 +1,4 @@
 import csv
-import click
 import json
 import pathlib
 from typing import Generator
@@ -64,13 +63,6 @@ def get_first_prize_file(data_folder, prize_folder) -> str:
         raise LotteryError("There is no prize file")
     first_file_user_friendly_string = first_file.relative_to(prizes_path.parent.parent)
     return str(first_file_user_friendly_string)
-
-
-def load_participants(file_path_str: str) -> list[Participant]:
-    file_path = pathlib.Path(file_path_str)
-    data_gen = generate_participants(file_path)
-
-    return list(data_gen)
 
 
 def load_prizes(file_path_str: str) -> list[Prize]:

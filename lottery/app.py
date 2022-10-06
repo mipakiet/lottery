@@ -25,27 +25,36 @@ class Lottery:
     def draw_winners(self) -> None:
         participants_dict = {index: self.__participants[index].weight for index in range(len(self.__participants))}
         self.__winners = []
-        for i in range(len(self.__prizes)):
-            winner = random.choices(tuple(participants_dict), participants_dict.values())[0]
-            participants_dict.pop(winner)
-            self.__winners.append(self.__participants[winner])
+        for prize in self.__prizes:
+            for _ in range(prize.amount):
+                winner = random.choices(tuple(participants_dict), participants_dict.values())[0]
+                participants_dict.pop(winner)
+                self.__winners.append(self.__participants[winner])
 
     def print_results(self) -> None:
         if self.__winners is None:
             raise LotteryError("You have to draw winners ")
         logging.info("The winners:")
-        for winner, prize in zip(self.__winners, self.__prizes):
-            logging.info(f"{winner.first_name} {winner.second_name}({winner.id}) Prize - {prize.name}")
+        counter = 0
+        for prize in self.__prizes:
+            for _ in range(prize.amount):
+                logging.info(f"{self.__winners[counter].first_name} {self.__winners[counter].second_name}"
+                             f"({self.__winners[counter].id}) Prize - {prize.name}")
+                counter += 1
 
     def save_results(self, path_file_dtr: str) -> None:
         if self.__winners is None:
             raise LotteryError("You have to draw winners ")
         path_file = pathlib.Path(path_file_dtr)
         result = []
-        for winner, prize in zip(self.__winners, self.__prizes):
-            result.append(
-                {"first_name": winner.first_name, "last_name": winner.second_name, "participant_id": winner.id,
-                 "prize": prize.name})
+
+        counter = 0
+        for prize in self.__prizes:
+            for _ in range(prize.amount):
+                result.append(
+                    {"first_name": self.__winners[counter].first_name, "last_name": self.__winners[counter].second_name,
+                     "participant_id": self.__winners[counter].id, "prize": prize.name})
+                counter += 1
         try:
             with open(path_file, mode='w') as json_file:
                 json.dump(result, json_file)
