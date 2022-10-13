@@ -1,20 +1,20 @@
 import pytest
 import pathlib
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, Mock
 
 from lottery.get import generate_participants, generate_prizes, get_first_prize_file, load_prizes
 from lottery.models import Participant, Prize
 from lottery.exceptions import LotteryError
 
 
-@pytest.mark.parametrize("participants_random", [1, 5, 10, 100], indirect=True)
-def test_generate_participants_success(participants_random):
+@pytest.mark.parametrize("participants", [1, 5, 10, 100], indirect=True)
+def test_generate_participants_success(participants):
 
     path = pathlib.Path("test.json")
-    mocker = mock_open(read_data=str(participants_random))
+    mocker = mock_open(read_data=str(participants))
     with patch('builtins.open', mocker):
         gen = generate_participants(path)
-    assert list(gen) is participants_random
+    assert list(gen) is participants
 
 
 @pytest.mark.parametrize("file_path", [
@@ -83,8 +83,8 @@ def test_get_first_prize_file_exception(data_folder, prize_folder, result):
         get_first_prize_file(data_folder, prize_folder)
 
 
-def test_load_prizes(mock, file_path):
-    mock.return_value = generate_prizes1()
+@patch("pathlib.Path")
+def test_load_prizes(file_path):
     result = load_prizes(file_path)
 
     assert result == prize1_Prize
