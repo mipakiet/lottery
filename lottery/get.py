@@ -27,10 +27,7 @@ def generate_participants(file_path: pathlib.Path) -> Generator[Participant, Non
                 for row in PARTICIPANTS_INPUT_FORMATS[suffix](file):
                     if 'id' not in row or 'first_name' not in row or 'last_name' not in row:
                         raise LotteryError("Error with loading data for file - wrong file schema")
-                    elif 'weight' in row:
-                        yield Participant(row['id'], row['first_name'], row['last_name'], row.get('weight', 1))
-                    else:
-                        yield Participant(row['id'], row['first_name'], row['last_name'])
+                    yield Participant(row['id'], row['first_name'], row['last_name'], row.get('weight', 1))
             except ValueError:
                 raise LotteryError("Error with loading data for file - cant read data")
     except OSError as e:

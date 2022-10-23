@@ -38,7 +38,7 @@ class Lottery:
         counter = 0
         for prize in self.__prizes:
             for _ in range(prize.amount):
-                logging.info(f"{self.__winners[counter].first_name} {self.__winners[counter].second_name}"
+                logging.info(f"{self.__winners[counter].first_name} {self.__winners[counter].last_name}"
                              f"({self.__winners[counter].id}) Prize - {prize.name}")
                 counter += 1
 
@@ -52,7 +52,7 @@ class Lottery:
         for prize in self.__prizes:
             for _ in range(prize.amount):
                 result.append(
-                    {"first_name": self.__winners[counter].first_name, "last_name": self.__winners[counter].second_name,
+                    {"first_name": self.__winners[counter].first_name, "last_name": self.__winners[counter].last_name,
                      "participant_id": self.__winners[counter].id, "prize": prize.name})
                 counter += 1
         try:
