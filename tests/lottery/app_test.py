@@ -1,4 +1,5 @@
-import mock
+import pathlib
+
 import pytest
 from unittest.mock import patch
 from testfixtures import LogCapture
@@ -67,34 +68,53 @@ def test_save_results_no_winners(lottery):
 
 def test_save_results_broken_file(lottery):
     lottery.draw_winners()
-    with mock.patch("builtins.open") as open_mock:
+    with patch("builtins.open") as open_mock:
         open_mock.side_effect = OSError
         with pytest.raises(LotteryError):
             lottery.save_results("test.json")
 
 
+@patch("lottery.app.get_first_prize_file")
 @patch("lottery.app.Lottery.print_results")
 @patch("lottery.app.Lottery.save_results")
 @patch("lottery.app.Lottery.draw_winners")
 @patch("lottery.app.load_prizes")
 @patch("lottery.app.generate_participants")
-def test_run(generate_participants_mock, load_prizes_mock, draw_winners_mock, save_results_mock, print_results_mock):
+@pytest.mark.parametrize("arguments", [
+    (['-datafile_path', 'datafile_path', 'datafile_name', '-datafile_suffix', 'datafile_suffix', 'prize_file',
+      '-result_file', 'result_file'],
+     [pathlib.Path("datafile_path") / "datafile_name.datafile_suffix", "prize_file", "result_file", False]),
+    (['-datafile_path', 'datafile_path', 'datafile_name', '-datafile_suffix', 'datafile_suffix', 'prize_file'],
+     [pathlib.Path("datafile_path") / "datafile_name.datafile_suffix", "prize_file", None, True]),
+    (['-datafile_path', 'datafile_path', 'datafile_name', '-datafile_suffix', 'datafile_suffix'],
+     [pathlib.Path("datafile_path") / "datafile_name.datafile_suffix", "prize_file", None, True]),
+    (['-datafile_path', 'datafile_path', 'datafile_name'],
+     [pathlib.Path("datafile_path") / "datafile_name.json", "prize_file", None, True]),
+    ([],
+     [pathlib.Path("data") / "participants1.json", "prize_file", None, True]),
+])
+def test_run(generate_participants_mock, load_prizes_mock, draw_winners_mock, save_results_mock, print_results_mock,
+             get_first_prize_file_mock, arguments):
+    get_first_prize_file_mock.return_value = arguments[1][1]
+
     runner = CliRunner()
     with LogCapture() as captured:
-        result = runner.invoke(run, ['-datafile_path', 'test', 'test', 'test', '-datafile_suffix', 'test',
-                                     '-result_file', 'test'])
+        result = runner.invoke(run, arguments[0])
+
+    assert generate_participants_mock.call_args.args[0] == arguments[1][0]
+    assert load_prizes_mock.call_args.args[0] == arguments[1][1]
+    assert draw_winners_mock.called is True
+    if arguments[1][2] is None:
+        assert save_results_mock.called is False
+    else:
+        assert save_results_mock.call_args.args[0] == arguments[1][2]
+    assert print_results_mock.called is arguments[1][3]
 
     assert captured.records[0].getMessage() == "Thx for using app!"
 
-    with LogCapture() as captured:
-        runner.invoke(run, ['-datafile_path', 'test', 'test', 'test', '-datafile_suffix', 'test'])
 
-    assert captured.records[0].getMessage() == "Thx for using app!"
-
-
-@patch("lottery.app.load_prizes")
 @patch("lottery.app.generate_participants")
-def test_run_exceptions(generate_participants_mock, load_prizes_mock):
+def test_run_load_prizes_exceptions(generate_participants_mock):
     runner = CliRunner()
     generate_participants_mock.side_effect = LotteryError
     with LogCapture() as captured:
@@ -102,9 +122,14 @@ def test_run_exceptions(generate_participants_mock, load_prizes_mock):
                                      '-result_file', 'test'])
         assert "" == captured.records[0].getMessage()
 
+
+@patch("lottery.app.load_prizes")
+@patch("lottery.app.generate_participants")
+def test_run__load_prize_exceptions(generate_participants_mock, load_prizes_mock):
+    runner = CliRunner()
     generate_participants_mock.side_effect = None
     load_prizes_mock.side_effect = LotteryError
     with LogCapture() as captured:
-        result = runner.invoke(run, ['-datafile_path', 'test', 'test', 'test', '-datafile_suffix', 'test',
-                                     '-result_file', 'test'])
+        result = runner.invoke(run, ['-datafile_path', 'test1', 'test2', 'test3', '-datafile_suffix', 'test4',
+                                     '-result_file', 'test5'])
         assert "" == captured.records[0].getMessage()
