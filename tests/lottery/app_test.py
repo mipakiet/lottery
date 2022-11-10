@@ -74,12 +74,12 @@ def test_save_results_broken_file(lottery):
             lottery.save_results("test.json")
 
 
-@patch("lottery.app.get_first_prize_file")
 @patch("lottery.app.Lottery.print_results")
 @patch("lottery.app.Lottery.save_results")
 @patch("lottery.app.Lottery.draw_winners")
 @patch("lottery.app.load_prizes")
 @patch("lottery.app.generate_participants")
+@patch("lottery.app.get_first_prize_file")
 @pytest.mark.parametrize("arguments", [
     (['-datafile_path', 'datafile_path', 'datafile_name', '-datafile_suffix', 'datafile_suffix', 'prize_file',
       '-result_file', 'result_file'],
@@ -93,14 +93,15 @@ def test_save_results_broken_file(lottery):
     ([],
      [pathlib.Path("data") / "participants1.json", "prize_file", None, True]),
 ])
-def test_run(generate_participants_mock, load_prizes_mock, draw_winners_mock, save_results_mock, print_results_mock,
-             get_first_prize_file_mock, arguments):
+def test_run(get_first_prize_file_mock, generate_participants_mock, load_prizes_mock, draw_winners_mock,
+             save_results_mock, print_results_mock, arguments):
     get_first_prize_file_mock.return_value = arguments[1][1]
 
     runner = CliRunner()
     with LogCapture() as captured:
         result = runner.invoke(run, arguments[0])
 
+    assert result.exit_code == 0
     assert generate_participants_mock.call_args.args[0] == arguments[1][0]
     assert load_prizes_mock.call_args.args[0] == arguments[1][1]
     assert draw_winners_mock.called is True

@@ -68,9 +68,12 @@ class Lottery:
 @click.argument('datafile_name', default=DEFAULT_PARTICIPANTS_FILE_NAME)
 @click.option('-datafile_suffix', prompt='Please enter suffix of the data file',
               default=DEFAULT_PARTICIPANTS_FILE_SUFFIX, show_default=True)
-@click.argument('prize_file', default=get_first_prize_file(DEFAULT_DATA_FOLDER, DEFAULT_PRIZE_FOLDER), type=str)
+@click.argument('prize_file', default="")
 @click.option('-result_file', type=str)
 def run(datafile_path, datafile_name, datafile_suffix, prize_file, result_file) -> None:
+
+    if prize_file == "":
+        prize_file = get_first_prize_file(DEFAULT_DATA_FOLDER, DEFAULT_PRIZE_FOLDER)
 
     try:
         participant = list(generate_participants(pathlib.Path(datafile_path) / (datafile_name + "." + datafile_suffix)))
