@@ -5,11 +5,11 @@ from dataclasses import dataclass
 class Participant:
     id: int
     first_name: str
-    second_name: str
+    last_name: str
     weight: int = 1
 
     def __str__(self) -> str:
-        return f"{self.id} Name - {self.first_name} Second - {self.second_name} Weight - {self.weight}"
+        return f"{self.id} Name - {self.first_name} Second - {self.last_name} Weight - {self.weight}"
 
 
 @dataclass
