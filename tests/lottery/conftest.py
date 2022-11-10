@@ -22,7 +22,7 @@ def prizes_random(amount: int = 5) -> [Prize]:
     id_counter = 0
     fake = Faker()
     while amount > 0:
-        amount_counter = random.randint(1, amount)
+        amount_counter = fake.pyint(1, amount)
         result.append(Prize(id_counter, fake.color(), amount_counter))
         id_counter += 1
         amount -= amount_counter

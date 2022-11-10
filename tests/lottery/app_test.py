@@ -80,36 +80,46 @@ def test_save_results_broken_file(lottery):
 @patch("lottery.app.load_prizes")
 @patch("lottery.app.generate_participants")
 @patch("lottery.app.get_first_prize_file")
-@pytest.mark.parametrize("arguments", [
-    (['-datafile_path', 'datafile_path', 'datafile_name', '-datafile_suffix', 'datafile_suffix', 'prize_file',
-      '-result_file', 'result_file'],
-     [pathlib.Path("datafile_path") / "datafile_name.datafile_suffix", "prize_file", "result_file", False]),
-    (['-datafile_path', 'datafile_path', 'datafile_name', '-datafile_suffix', 'datafile_suffix', 'prize_file'],
-     [pathlib.Path("datafile_path") / "datafile_name.datafile_suffix", "prize_file", None, True]),
-    (['-datafile_path', 'datafile_path', 'datafile_name', '-datafile_suffix', 'datafile_suffix'],
-     [pathlib.Path("datafile_path") / "datafile_name.datafile_suffix", "prize_file", None, True]),
-    (['-datafile_path', 'datafile_path', 'datafile_name'],
-     [pathlib.Path("datafile_path") / "datafile_name.json", "prize_file", None, True]),
-    ([],
-     [pathlib.Path("data") / "participants1.json", "prize_file", None, True]),
+@pytest.mark.parametrize("run_options, results", [
+    (
+        ['-datafile_path', 'datafile_path', 'datafile_name', '-datafile_suffix', 'datafile_suffix', 'prize_file',
+         '-result_file', 'result_file'],
+        [pathlib.Path("datafile_path") / "datafile_name.datafile_suffix", "prize_file", "result_file", False],
+    ),
+    (
+        ['-datafile_path', 'datafile_path', 'datafile_name', '-datafile_suffix', 'datafile_suffix', 'prize_file'],
+        [pathlib.Path("datafile_path") / "datafile_name.datafile_suffix", "prize_file", None, True],
+    ),
+    (
+        ['-datafile_path', 'datafile_path', 'datafile_name', '-datafile_suffix', 'datafile_suffix'],
+        [pathlib.Path("datafile_path") / "datafile_name.datafile_suffix", "prize_file", None, True],
+    ),
+    (
+        ['-datafile_path', 'datafile_path', 'datafile_name'],
+        [pathlib.Path("datafile_path") / "datafile_name.json", "prize_file", None, True],
+    ),
+    (
+        [],
+        [pathlib.Path("data") / "participants1.json", "prize_file", None, True],
+    ),
 ])
 def test_run(get_first_prize_file_mock, generate_participants_mock, load_prizes_mock, draw_winners_mock,
-             save_results_mock, print_results_mock, arguments):
-    get_first_prize_file_mock.return_value = arguments[1][1]
+             save_results_mock, print_results_mock, run_options, results):
+    get_first_prize_file_mock.return_value = results[1]
 
     runner = CliRunner()
     with LogCapture() as captured:
-        result = runner.invoke(run, arguments[0])
+        result = runner.invoke(run, run_options)
 
     assert result.exit_code == 0
-    assert generate_participants_mock.call_args.args[0] == arguments[1][0]
-    assert load_prizes_mock.call_args.args[0] == arguments[1][1]
+    assert generate_participants_mock.call_args.args[0] == results[0]
+    assert load_prizes_mock.call_args.args[0] == results[1]
     assert draw_winners_mock.called is True
-    if arguments[1][2] is None:
+    if results[2] is None:
         assert save_results_mock.called is False
     else:
-        assert save_results_mock.call_args.args[0] == arguments[1][2]
-    assert print_results_mock.called is arguments[1][3]
+        assert save_results_mock.call_args.args[0] == results[2]
+    assert print_results_mock.called is results[3]
 
     assert captured.records[0].getMessage() == "Thx for using app!"
 
